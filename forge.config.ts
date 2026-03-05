@@ -13,8 +13,11 @@ import { cp, mkdir } from 'fs/promises';
 // Native modules that need special handling for packaging
 const nativeModules = [
   'uiohook-napi',
+  // node-insert-text and its platform-specific native modules
   '@xitanggg/node-insert-text',
-  // Dependencies
+  '@xitanggg/node-insert-text-darwin-arm64',
+  '@xitanggg/node-insert-text-darwin-universal',
+  // node-gyp-build
   'node-gyp-build',
   // WebSocket
   'ws',
@@ -62,11 +65,8 @@ const config: ForgeConfig = {
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new VitePlugin({
-      // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
-      // If you are familiar with Vite configuration, it will look really familiar.
       build: [
         {
-          // `entry` is just an alias for `build.lib.entry` in the corresponding file of `config`.
           entry: 'src/main.ts',
           config: 'vite.main.config.ts',
           target: 'main',
@@ -88,8 +88,6 @@ const config: ForgeConfig = {
         },
       ],
     }),
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
@@ -97,7 +95,7 @@ const config: ForgeConfig = {
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: false, // Required for native modules (.node files)
+      [FuseV1Options.OnlyLoadAppFromAsar]: false,
     }),
   ],
 };
