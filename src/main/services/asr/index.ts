@@ -13,18 +13,18 @@ export type { StartASRResponse, StopASRResponse } from './procedures';
 
 // Types
 export type {
-  VolcengineClientConfig,
+  FunASRClientConfig,
   ConnectionState,
-  VolcengineMessage,
-  VolcengineHeader,
+  FunASRMessage,
+  FunASRHeader,
 } from './types';
-export { VOLCENGINE_CONSTANTS } from './types';
+export { FUN_ASR_CONSTANTS } from './types';
 
 // Library utilities
 export {
-  VolcengineClient,
+  FunASRClient,
   loadASRConfig,
   isASRConfigured,
   ConfigurationError,
 } from './lib';
-export type { VolcengineClientEvents, ASREnvConfig } from './lib';
+export type { FunASREvents, ASREnvConfig } from './lib';

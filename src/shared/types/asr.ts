@@ -4,12 +4,11 @@
  */
 
 /**
- * ASR configuration for Volcengine service.
+ * ASR configuration for Fun-ASR service.
  */
 export interface ASRConfig {
-  appId: string;
-  accessToken: string;
-  resourceId: string; // "volc.bigasr.sauc.duration"
+  apiKey: string;
+  endpoint?: string;
 }
 
 /**

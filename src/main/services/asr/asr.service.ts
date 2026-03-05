@@ -6,7 +6,7 @@
 
 import { EventEmitter } from 'events';
 import log from 'electron-log';
-import { VolcengineClient } from './lib/volcengine-client';
+import { FunASRClient } from './lib/fun-asr-client';
 import { loadASRConfig, ConfigurationError } from './lib/config';
 import { floatingWindow } from '../../windows';
 import type { ASRConfig, ASRResult, ASRStatus } from '../../../shared/types/asr';
@@ -57,7 +57,7 @@ export interface ASRService {
  * ```
  */
 export class ASRService extends EventEmitter {
-  private client: VolcengineClient | null = null;
+  private client: FunASRClient | null = null;
   private status: ASRStatus = 'idle';
   private finalResult: ASRResult | null = null;
   private lastResult: ASRResult | null = null;
@@ -102,13 +102,12 @@ export class ASRService extends EventEmitter {
 
     // Merge with optional runtime config
     const clientConfig = {
-      appId: config?.appId ?? envConfig.appId,
-      accessToken: config?.accessToken ?? envConfig.accessToken,
-      resourceId: config?.resourceId ?? envConfig.resourceId,
+      apiKey: config?.apiKey ?? envConfig.apiKey,
+      endpoint: config?.endpoint ?? envConfig.endpoint ?? "wss://dashscope.aliyuncs.com/api-ws/v1/inference/",
     };
 
-    // Create Volcengine client
-    this.client = new VolcengineClient(clientConfig);
+    // Create Fun-ASR client
+    this.client = new FunASRClient(clientConfig);
 
     // Setup event forwarding
     this.setupClientListeners();
@@ -116,7 +115,7 @@ export class ASRService extends EventEmitter {
     // Show floating window and update status
     this.updateStatus('connecting');
 
-    // Connect to Volcengine service
+    // Connect to Fun-ASR service
     try {
       await this.client.connect();
       logger.info('ASR session started successfully');
@@ -202,7 +201,7 @@ export class ASRService extends EventEmitter {
   }
 
   /**
-   * Setup event listeners on the Volcengine client.
+   * Setup event listeners on the Fun-ASR client.
    */
   private setupClientListeners(): void {
     if (!this.client) return;
@@ -223,7 +222,7 @@ export class ASRService extends EventEmitter {
     });
 
     this.client.on('error', (error) => {
-      logger.error('Volcengine client error', { message: error.message });
+      logger.error('Fun-ASR client error', { message: error.message });
       this.updateStatus('error');
       this.emit('error', error);
       floatingWindow.sendError(error.message);

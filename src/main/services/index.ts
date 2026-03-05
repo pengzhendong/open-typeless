@@ -10,20 +10,20 @@ export {
   startASR,
   stopASR,
   getASRStatus,
-  VolcengineClient,
+  FunASRClient,
   loadASRConfig,
   isASRConfigured,
   ConfigurationError,
-  VOLCENGINE_CONSTANTS,
+  FUN_ASR_CONSTANTS,
 } from './asr';
 
 export type {
   ASRServiceEvents,
   StartASRResponse,
   StopASRResponse,
-  VolcengineClientEvents,
+  FunASREvents,
   ASREnvConfig,
-  VolcengineClientConfig,
+  FunASRClientConfig,
   ConnectionState,
 } from './asr';
 

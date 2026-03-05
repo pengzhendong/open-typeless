@@ -16,6 +16,8 @@ const nativeModules = [
   '@xitanggg/node-insert-text',
   // Dependencies
   'node-gyp-build',
+  // WebSocket
+  'ws',
 ];
 
 const config: ForgeConfig = {

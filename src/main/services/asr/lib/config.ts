@@ -1,17 +1,16 @@
 /**
  * ASR configuration loader.
- * Loads Volcengine ASR credentials from environment variables.
+ * Loads Fun-ASR credentials from environment variables.
  */
 
-import { VOLCENGINE_CONSTANTS } from '../types';
+import { FUN_ASR_CONSTANTS } from '../types';
 
 /**
  * ASR environment configuration.
  */
 export interface ASREnvConfig {
-  appId: string;
-  accessToken: string;
-  resourceId: string;
+  apiKey: string;
+  endpoint?: string;
 }
 
 /**
@@ -28,41 +27,27 @@ export class ConfigurationError extends Error {
  * Load ASR configuration from environment variables.
  *
  * Required environment variables:
- * - VOLCENGINE_APP_ID: Application ID from Volcengine console
- * - VOLCENGINE_ACCESS_TOKEN: Access token for authentication
+ * - DASHSCOPE_API_KEY: API Key from Alibaba Cloud DashScope console
  *
  * Optional environment variables:
- * - VOLCENGINE_RESOURCE_ID: Resource ID (default: "volc.bigasr.sauc.duration")
+ * - FUN_ASR_ENDPOINT: Custom WebSocket endpoint (default: Fun-ASR endpoint)
  *
  * @returns ASR configuration object
  * @throws ConfigurationError if required variables are missing
  */
 export function loadASRConfig(): ASREnvConfig {
-  const appId = process.env.VOLCENGINE_APP_ID;
-  const accessToken = process.env.VOLCENGINE_ACCESS_TOKEN;
-  const resourceId =
-    process.env.VOLCENGINE_RESOURCE_ID ?? VOLCENGINE_CONSTANTS.DEFAULT_RESOURCE_ID;
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  const endpoint = process.env.FUN_ASR_ENDPOINT ?? FUN_ASR_CONSTANTS.ENDPOINT;
 
-  const missingVars: string[] = [];
-
-  if (!appId) {
-    missingVars.push('VOLCENGINE_APP_ID');
-  }
-
-  if (!accessToken) {
-    missingVars.push('VOLCENGINE_ACCESS_TOKEN');
-  }
-
-  if (missingVars.length > 0) {
+  if (!apiKey) {
     throw new ConfigurationError(
-      `Missing required environment variables: ${missingVars.join(', ')}`
+      'Missing required environment variable: DASHSCOPE_API_KEY'
     );
   }
 
   return {
-    appId: appId as string,
-    accessToken: accessToken as string,
-    resourceId,
+    apiKey: apiKey as string,
+    endpoint,
   };
 }
 
@@ -72,5 +57,5 @@ export function loadASRConfig(): ASREnvConfig {
  * @returns true if all required environment variables are set
  */
 export function isASRConfigured(): boolean {
-  return Boolean(process.env.VOLCENGINE_APP_ID && process.env.VOLCENGINE_ACCESS_TOKEN);
+  return Boolean(process.env.DASHSCOPE_API_KEY);
 }

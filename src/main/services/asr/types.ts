@@ -1,62 +1,91 @@
 /**
- * ASR Volcengine protocol types and Zod schemas.
- * Defines the WebSocket message format for Volcengine BigModel ASR.
+ * ASR Fun-ASR protocol types and Zod schemas.
+ * Defines the WebSocket message format for Fun-ASR (Alibaba DashScope).
  */
 
 import { z } from 'zod';
 
 // ============================================================================
-// Volcengine WebSocket Protocol Schemas
+// Fun-ASR WebSocket Protocol Schemas
 // ============================================================================
 
 /**
- * Message header schema for Volcengine protocol.
+ * Fun-ASR message header schema.
  */
-export const volcengineHeaderSchema = z.object({
-  message_id: z.string(),
+export const funASRHeaderSchema = z.object({
+  action: z.string(),
   task_id: z.string(),
-  namespace: z.string(),
-  name: z.string(),
-  status: z.number().optional(),
-  status_message: z.string().optional(),
+  streaming: z.string(),
+  event: z.string().optional(),
+  error_message: z.string().optional(),
 });
 
 /**
- * Generic Volcengine message schema.
+ * Fun-ASR message payload schema.
  */
-export const volcengineMessageSchema = z.object({
-  header: volcengineHeaderSchema,
-  payload: z.record(z.string(), z.unknown()),
+export const funASRPayloadSchema = z.object({
+  task_group: z.string().optional(),
+  task: z.string().optional(),
+  function: z.string().optional(),
+  model: z.string().optional(),
+  parameters: z.record(z.string(), z.unknown()).optional(),
+  input: z.record(z.string(), z.unknown()).optional(),
+  output: z.record(z.string(), z.unknown()).optional(),
+  usage: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type VolcengineHeader = z.infer<typeof volcengineHeaderSchema>;
-export type VolcengineMessage = z.infer<typeof volcengineMessageSchema>;
+/**
+ * Generic Fun-ASR message schema.
+ */
+export const funASRMessageSchema = z.object({
+  header: funASRHeaderSchema,
+  payload: funASRPayloadSchema,
+});
+
+export type FunASRHeader = z.infer<typeof funASRHeaderSchema>;
+export type FunASRPayload = z.infer<typeof funASRPayloadSchema>;
+export type FunASRMessage = z.infer<typeof funASRMessageSchema>;
 
 // ============================================================================
 // Transcription Result Schemas
 // ============================================================================
 
 /**
- * Single sentence result from ASR.
+ * Single word result from ASR.
+ */
+export const wordResultSchema = z.object({
+  begin_time: z.number(),
+  end_time: z.number(),
+  text: z.string(),
+  punctuation: z.string().optional(),
+  fixed: z.boolean().optional(),
+  speaker_id: z.number().optional(),
+});
+
+/**
+ * Sentence result from ASR.
  */
 export const sentenceResultSchema = z.object({
+  sentence_id: z.number(),
+  begin_time: z.number(),
+  end_time: z.number().nullable(),
   text: z.string(),
-  begin_time: z.number().optional(),
-  end_time: z.number().optional(),
-  confidence: z.number().optional(),
+  channel_id: z.number(),
+  speaker_id: z.number().nullable(),
+  sentence_end: z.boolean(),
+  sentence_begin: z.boolean(),
+  words: z.array(wordResultSchema).optional(),
+  stash: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
  * Transcription result payload.
  */
 export const transcriptionResultPayloadSchema = z.object({
-  result: z.object({
-    text: z.string().optional(),
-    sentences: z.array(sentenceResultSchema).optional(),
-    is_complete: z.boolean().optional(),
-  }).optional(),
+  sentence: sentenceResultSchema.optional(),
 });
 
+export type WordResult = z.infer<typeof wordResultSchema>;
 export type SentenceResult = z.infer<typeof sentenceResultSchema>;
 export type TranscriptionResultPayload = z.infer<typeof transcriptionResultPayloadSchema>;
 
@@ -65,12 +94,11 @@ export type TranscriptionResultPayload = z.infer<typeof transcriptionResultPaylo
 // ============================================================================
 
 /**
- * Configuration for VolcengineClient.
+ * Configuration for FunASRClient.
  */
-export interface VolcengineClientConfig {
-  appId: string;
-  accessToken: string;
-  resourceId: string;
+export interface FunASRClientConfig {
+  apiKey: string;
+  endpoint: string;
 }
 
 /**
@@ -122,28 +150,19 @@ export interface AudioDataPayload {
 // Constants
 // ============================================================================
 
-export const VOLCENGINE_CONSTANTS = {
-  /** WebSocket endpoint for Volcengine BigModel ASR */
-  ENDPOINT: 'wss://openspeech.bytedance.com/api/v3/sauc/bigmodel',
-
-  /** Default resource ID */
-  DEFAULT_RESOURCE_ID: 'volc.bigasr.sauc.duration',
-
-  /** Namespace for speech transcription */
-  NAMESPACE: 'SpeechTranscriber',
+export const FUN_ASR_CONSTANTS = {
+  /** WebSocket endpoint for Fun-ASR */
+  ENDPOINT: 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/',
 
   /** Model name */
-  MODEL_NAME: 'bigmodel',
+  MODEL_NAME: 'fun-asr-realtime',
 
-  /** Message names */
-  MESSAGE_NAMES: {
-    START: 'StartTranscription',
-    AUDIO_DATA: 'AudioData',
-    STOP: 'StopTranscription',
-    TRANSCRIPTION_RESULT_CHANGED: 'TranscriptionResultChanged',
-    TRANSCRIPTION_COMPLETED: 'TranscriptionCompleted',
-    TASK_FAILED: 'TaskFailed',
-  },
+  /** Audio format */
+  SAMPLE_RATE: 16000,
+  FORMAT: 'wav',
+
+  /** Language hints */
+  LANGUAGE_HINTS: ['zh', 'en'],
 
   /** Reconnection settings */
   RECONNECT: {
