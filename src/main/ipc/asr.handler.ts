@@ -12,6 +12,10 @@ import type { ASRConfig } from '../../shared/types/asr';
 
 const logger = log.scope('asr-handler');
 
+// Track audio statistics
+let totalAudioBytesReceived = 0;
+let audioChunkCount = 0;
+
 /**
  * Get all windows for broadcasting events.
  * We need to send events to ALL windows because:
@@ -38,28 +42,49 @@ function broadcastToAllWindows(channel: string, ...args: unknown[]): void {
  * Registers handlers for start/stop requests and forwards service events to renderer.
  */
 export function setupASRHandlers(): void {
+  // Reset audio stats
+  totalAudioBytesReceived = 0;
+  audioChunkCount = 0;
+
   // Handle ASR start request
   ipcMain.handle(IPC_CHANNELS.ASR.START, async (_event, config?: Partial<ASRConfig>) => {
     logger.info('Received ASR start request', { hasConfig: !!config });
+    // Reset stats on new session
+    totalAudioBytesReceived = 0;
+    audioChunkCount = 0;
     return startASR(config);
   });
 
   // Handle ASR stop request
   ipcMain.handle(IPC_CHANNELS.ASR.STOP, async () => {
-    logger.info('Received ASR stop request');
+    logger.info('Received ASR stop request', {
+      totalChunks: audioChunkCount,
+      totalBytes: totalAudioBytesReceived,
+      totalDuration: `${(totalAudioBytesReceived / (16000 * 2)).toFixed(2)}s`,
+    });
     return stopASR();
   });
 
   // Handle incoming audio data from renderer
-  let audioChunkCount = 0;
   ipcMain.on(IPC_CHANNELS.ASR.SEND_AUDIO, (_event, chunk: ArrayBuffer) => {
     audioChunkCount++;
+    totalAudioBytesReceived += chunk.byteLength;
+
+    // Calculate duration
+    const sampleRate = 16000;
+    const bytesPerSample = 2;
+    const currentDurationSeconds = totalAudioBytesReceived / (sampleRate * bytesPerSample);
+
+    // Log first chunk and every 50 chunks
     if (audioChunkCount === 1 || audioChunkCount % 50 === 0) {
-      logger.info('Received audio chunk from renderer', {
-        count: audioChunkCount,
-        size: chunk.byteLength,
+      logger.info('Received audio chunk', {
+        chunkNum: audioChunkCount,
+        chunkSize: chunk.byteLength,
+        totalBytes: totalAudioBytesReceived,
+        currentDuration: `${currentDurationSeconds.toFixed(2)}s`,
       });
     }
+
     asrService.processAudioChunk(chunk);
   });
 
@@ -81,11 +106,16 @@ function setupServiceEventForwarding(): void {
 
   // Forward results to all windows
   asrService.on('result', (result) => {
+    logger.info('ASR result received', {
+      text: result.text?.substring(0, 50),
+      isFinal: result.isFinal,
+    });
     broadcastToAllWindows(IPC_CHANNELS.ASR.RESULT, result);
   });
 
   // Forward errors to all windows
   asrService.on('error', (error) => {
+    logger.error('ASR error', { error: error.message });
     broadcastToAllWindows(IPC_CHANNELS.ASR.ERROR, error.message);
   });
 
