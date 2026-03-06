@@ -43,10 +43,11 @@ const createWindow = async () => {
     logger.info('Microphone permission granted');
   }
 
-  // Create the browser window.
+  // Create the browser window (hidden - app runs in background)
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    show: false, // Start hidden, no window popup
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -60,9 +61,6 @@ const createWindow = async () => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 
   // Create the floating window (hidden initially)
   floatingWindow.create();
