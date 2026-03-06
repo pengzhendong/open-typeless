@@ -88,7 +88,7 @@ export class ASRService extends EventEmitter {
     // Load configuration from environment
     let envConfig;
     try {
-      envConfig = loadASRConfig();
+      envConfig = await loadASRConfig();
     } catch (error) {
       if (error instanceof ConfigurationError) {
         logger.error('ASR configuration error', { message: error.message });

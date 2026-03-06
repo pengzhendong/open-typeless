@@ -1,8 +1,13 @@
 /**
  * ASR configuration loader.
- * Loads Fun-ASR credentials from environment variables.
+ * Loads Fun-ASR credentials from:
+ * 1. ~/.open-typeless/config.json (packaged app)
+ * 2. .env file (development)
  */
 
+import { readFile } from 'fs/promises';
+import { homedir } from 'os';
+import { join } from 'path';
 import { FUN_ASR_CONSTANTS } from '../types';
 
 /**
@@ -11,6 +16,14 @@ import { FUN_ASR_CONSTANTS } from '../types';
 export interface ASREnvConfig {
   apiKey: string;
   endpoint?: string;
+}
+
+/**
+ * Configuration file format in ~/.open-typeless/config.json
+ */
+export interface ConfigFile {
+  DASHSCOPE_API_KEY?: string;
+  FUN_ASR_ENDPOINT?: string;
 }
 
 /**
@@ -24,24 +37,52 @@ export class ConfigurationError extends Error {
 }
 
 /**
- * Load ASR configuration from environment variables.
+ * Load config file from home directory.
+ */
+async function loadConfigFromHome(): Promise<ConfigFile | null> {
+  const configPath = join(homedir(), '.open-typeless', 'config.json');
+  try {
+    const content = await readFile(configPath, 'utf-8');
+    return JSON.parse(content) as ConfigFile;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Load ASR configuration.
  *
- * Required environment variables:
+ * Priority:
+ * 1. ~/.open-typeless/config.json (packaged app)
+ * 2. process.env (if .env was loaded via dotenv)
+ *
+ * Required:
  * - DASHSCOPE_API_KEY: API Key from Alibaba Cloud DashScope console
  *
- * Optional environment variables:
+ * Optional:
  * - FUN_ASR_ENDPOINT: Custom WebSocket endpoint (default: Fun-ASR endpoint)
  *
  * @returns ASR configuration object
- * @throws ConfigurationError if required variables are missing
+ * @throws ConfigurationError if required configuration is missing
  */
-export function loadASRConfig(): ASREnvConfig {
+export async function loadASRConfig(): Promise<ASREnvConfig> {
+  // 1. Try loading from home directory config file first
+  const homeConfig = await loadConfigFromHome();
+  if (homeConfig?.DASHSCOPE_API_KEY) {
+    return {
+      apiKey: homeConfig.DASHSCOPE_API_KEY,
+      endpoint: homeConfig.FUN_ASR_ENDPOINT ?? FUN_ASR_CONSTANTS.ENDPOINT,
+    };
+  }
+
+  // 2. Fallback to environment variables (for development with .env)
   const apiKey = process.env.DASHSCOPE_API_KEY;
   const endpoint = process.env.FUN_ASR_ENDPOINT ?? FUN_ASR_CONSTANTS.ENDPOINT;
 
   if (!apiKey) {
     throw new ConfigurationError(
-      'Missing required environment variable: DASHSCOPE_API_KEY'
+      'Missing configuration: DASHSCOPE_API_KEY. ' +
+        'Please set it in ~/.open-typeless/config.json or .env file.'
     );
   }
 
@@ -53,9 +94,11 @@ export function loadASRConfig(): ASREnvConfig {
 
 /**
  * Check if ASR configuration is available without throwing.
- *
- * @returns true if all required environment variables are set
  */
-export function isASRConfigured(): boolean {
+export async function isASRConfigured(): Promise<boolean> {
+  const homeConfig = await loadConfigFromHome();
+  if (homeConfig?.DASHSCOPE_API_KEY) {
+    return true;
+  }
   return Boolean(process.env.DASHSCOPE_API_KEY);
 }
