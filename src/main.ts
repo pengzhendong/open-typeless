@@ -1,10 +1,13 @@
 import 'dotenv/config';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { setupAllIpcHandlers } from './main/ipc';
 import { floatingWindow } from './main/windows';
-import { pushToTalkService } from './main/services';
+import { pushToTalkService, permissionsService } from './main/services';
+import log from 'electron-log';
+
+const logger = log.scope('main');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -14,7 +17,32 @@ if (started) {
 // Setup IPC handlers before app is ready
 setupAllIpcHandlers();
 
-const createWindow = () => {
+const createWindow = async () => {
+  // Request microphone permission on app launch
+  // This triggers the system permission dialog if not yet determined
+  logger.info('Requesting microphone permission...');
+  const microphoneGranted = await permissionsService.requestMicrophonePermission();
+
+  if (!microphoneGranted) {
+    logger.warn('Microphone permission not granted. Voice input will not work.');
+
+    // Show dialog to guide user to settings
+    const result = await dialog.showMessageBox({
+      type: 'warning',
+      buttons: ['Open Settings', 'Cancel'],
+      title: 'Microphone Permission Required',
+      message: 'Microphone permission is required for voice input.',
+      detail: 'Please grant microphone access in System Settings > Privacy & Security > Microphone, then restart the app.',
+    });
+
+    if (result.response === 0) {
+      // User clicked "Open Settings"
+      permissionsService.openSettings('microphone');
+    }
+  } else {
+    logger.info('Microphone permission granted');
+  }
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
