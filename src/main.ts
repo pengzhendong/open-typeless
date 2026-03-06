@@ -2,12 +2,12 @@ import 'dotenv/config';
 import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+
+// Import logger first to configure electron-log before other modules
+import { logger } from './main/logger';
 import { setupAllIpcHandlers } from './main/ipc';
 import { floatingWindow } from './main/windows';
 import { pushToTalkService, permissionsService } from './main/services';
-import log from 'electron-log';
-
-const logger = log.scope('main');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
