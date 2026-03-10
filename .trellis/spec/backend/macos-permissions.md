@@ -203,7 +203,7 @@ Create `entitlements.plist`:
 tccutil reset Microphone <bundle-id>
 
 # Example
-tccutil reset Microphone ai.mindfold.open-typeless
+tccutil reset Microphone ai.mindfold.funtype
 
 # Reset all permissions for your app
 tccutil reset All <bundle-id>

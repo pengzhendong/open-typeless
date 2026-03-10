@@ -28,6 +28,7 @@ const config: ForgeConfig = {
     asar: {
       unpack: '*.{node,dll}',
     },
+    icon: './icon',
   },
   rebuildConfig: {
     force: true,

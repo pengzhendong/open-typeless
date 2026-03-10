@@ -1,9 +1,9 @@
 # 1. 项目初始化
 
 ```bash
-npx create-electron-app@latest open-typeless --template=vite-typescript
+npx create-electron-app@latest funtype --template=vite-typescript
 
-cd open-typeless
+cd funtype
 
 # 删除 npm 生成的文件
 rm -rf node_modules package-lock.json
@@ -42,7 +42,7 @@ cp -r ../old-project/electron-doc ./
 
 ## prompt2
 
-然后我们项目是打算复刻typeless,做一个 open-typeless ,需求如下
+然后我们项目是打算复刻typeless,做一个 funtype ,需求如下
 
 ```md
 一个 **macOS 语音输入工具**,类似于 macOS 自带的听写功能,但使用火山引擎 (Volcengine) 的 ASR 服务来实现更好的中文识别效果。
@@ -125,4 +125,4 @@ cp -r ../old-project/electron-doc ./
 
 ## prompt7
 
-ok了,然后在帮我创建一个完整制作 open-typeless 的task
+ok了,然后在帮我创建一个完整制作 funtype 的task

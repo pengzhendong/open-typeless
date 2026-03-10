@@ -1,7 +1,7 @@
 /**
  * ASR configuration loader.
  * Loads Fun-ASR credentials from:
- * 1. ~/.open-typeless/config.json (packaged app)
+ * 1. ~/.funtype/config.json (packaged app)
  * 2. .env file (development)
  */
 
@@ -19,7 +19,7 @@ export interface ASREnvConfig {
 }
 
 /**
- * Configuration file format in ~/.open-typeless/config.json
+ * Configuration file format in ~/.funtype/config.json
  */
 export interface ConfigFile {
   DASHSCOPE_API_KEY?: string;
@@ -40,7 +40,7 @@ export class ConfigurationError extends Error {
  * Load config file from home directory.
  */
 async function loadConfigFromHome(): Promise<ConfigFile | null> {
-  const configPath = join(homedir(), '.open-typeless', 'config.json');
+  const configPath = join(homedir(), '.funtype', 'config.json');
   try {
     const content = await readFile(configPath, 'utf-8');
     return JSON.parse(content) as ConfigFile;
@@ -53,7 +53,7 @@ async function loadConfigFromHome(): Promise<ConfigFile | null> {
  * Load ASR configuration.
  *
  * Priority:
- * 1. ~/.open-typeless/config.json (packaged app)
+ * 1. ~/.funtype/config.json (packaged app)
  * 2. process.env (if .env was loaded via dotenv)
  *
  * Required:
@@ -82,7 +82,7 @@ export async function loadASRConfig(): Promise<ASREnvConfig> {
   if (!apiKey) {
     throw new ConfigurationError(
       'Missing configuration: DASHSCOPE_API_KEY. ' +
-        'Please set it in ~/.open-typeless/config.json or .env file.'
+        'Please set it in ~/.funtype/config.json or .env file.'
     );
   }
 
